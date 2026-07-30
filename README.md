@@ -1,32 +1,91 @@
-# React + TypeScript + Vite
+# 스터디 과제판 (checkcheck)
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+스터디 그룹의 과제 마감과 제출 현황을 한 화면에서 보는 단일 페이지 앱.
+과제를 마감 임박도에 따라 네 밴드로 묶고, 멤버별 제출 여부를 **제출 스탬프 줄**로 보여준다.
 
-Currently, two official plugins are available:
+Vite + React 19 + TypeScript. 라우터 없음, React 외 런타임 의존성 없음.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 실행
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev       # 개발 서버
+npm run build     # tsc -b && vite build
+npm run preview   # 빌드 결과 미리보기
+npm run lint      # oxlint
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## 기능
+
+- **마감 밴드** — 과제를 `지남 / 오늘·내일 / 이번 주 / 이후` 로 자동 분류한다.
+  기준은 시각 차가 아니라 자정 경계 기준 날짜 차(`lib/deadline.ts`)라서, 밤 11시에 봐도
+  "내일 마감"이 오늘로 계산되지 않는다.
+- **제출 스탬프 줄** — 과제마다 멤버 수만큼 원이 놓이고, 누르면 제출 시각이 찍힌다.
+  각 도장은 멤버·과제 id에서 결정론적으로 뽑은 ±3°(0.5° 단위) 각도로 기울어진다(`lib/stampAngle.ts`).
+  리렌더에도 각도가 흔들리지 않는다.
+- **하위 항목(steps)** — 과제 안의 체크리스트. 진행률은 완료 개수로 계산한다.
+- **메모** — "나"로 선택한 멤버 이름으로 과제에 짧은 메모를 남긴다.
+- **과목 탭** — 과목별 필터. 과목은 색이 아니라 2글자 모노 코드(`알고`, `자구`, `영작`)로 구분한다.
+- **내보내기 · 가져오기** — 보드 전체를 JSON 파일로 주고받는다. 가져올 때 스키마를 검증하고,
+  실패 사유를 사용자에게 그대로 보여준다.
+
+처음 열면 시드 데이터(멤버 5명, 과목 3개, 과제 5건)가 채워진다. 시드의 마감일은 상대 계산이라
+언제 처음 열어도 네 밴드가 모두 채워진다.
+
+## 데이터와 공유 방식 (중요)
+
+**저장은 `localStorage`이고, 이는 브라우저마다 따로다.** 멤버들이 각자 브라우저에서 열어도
+같은 보드를 보지 못한다. 이 앱은 **한 사람이 보드를 관리하고, JSON 내보내기·가져오기로 공유하는**
+전제로 만들어졌다. 실시간 동기화는 의도적으로 범위 밖이다.
+
+영속성은 전부 `src/lib/storage.ts` 한 파일에 격리돼 있다. 컴포넌트는 `localStorage`를 직접 부르지
+않으므로, 백엔드를 붙일 때는 이 파일의 네 함수(`loadBoard`, `saveBoard`, `loadMe`, `saveMe`)만
+교체하면 된다.
+
+저장 키: `checkcheck.board.v1`, `checkcheck.me.v1`. 보드 스키마에는 `version: 1`이 박혀 있고,
+가져오기는 다른 버전을 거부한다.
+
+## 구조
+
+```
+src/
+  App.tsx              상태 소유 + 모든 변경 함수. 하위는 전부 표현 컴포넌트다.
+  types.ts             Board / Assignment / Member / Subject / Step / Note / Band
+  lib/
+    deadline.ts        날짜 차, 밴드 분류, D-day·날짜 포맷(ko-KR), datetime-local 왕복
+    storage.ts         유일한 영속성 접점. 내보내기·가져오기 검증 포함
+    seed.ts            첫 실행용 시드 보드
+    progress.ts        steps 완료율, 제출 인원 집계
+    stampAngle.ts      멤버·과제 id → 고정 기울기 각도
+    id.ts              접두사 + 난수 id
+  components/          TopBar, MeBar, SubjectTabs, BandSection, AssignmentCard,
+                       StampRow, StepList, NotePanel, AssignmentForm
+  styles/
+    tokens.css         색·타이포·간격·모션 토큰
+    global.css         리셋과 기본 타이포
+    components.css     컴포넌트 스타일
+```
+
+## 디자인 규칙 — "스터디 바인더"
+
+재생지 위에 청색 도장 잉크. 색은 정확히 다섯 개다.
+
+| 역할 | 값 |
+| --- | --- |
+| 종이 | `#E8EBE4` (카드 `#F2F4EE`) |
+| 잉크 | `#22282B` |
+| 도장 | `#2F4C8C` |
+| 경고 | `#C2452D` |
+| 흐림 | `#8A9490` |
+
+지켜야 할 제약:
+
+- **액센트는 도장 blue와 경고 red 둘뿐**이고, red는 **"마감 지남 + 미제출"** 한 조건에서만 나온다.
+- 새 색은 위 다섯 색에서 `color-mix`로 파생시킨다. 여섯 번째 색조를 추가하지 않는다.
+- **과목에 색을 부여하지 않는다.** 2글자 모노 코드로 구분한다.
+- 서체는 Gowun Batang 700(디스플레이) / IBM Plex Sans KR(본문) / IBM Plex Mono(라벨·날짜·과목 코드).
+- 모션은 **도장 누름**과 **밴드 등장 스태거** 둘뿐이다. 대담함은 스탬프 줄에만 쓴다.
+
+이 제약들은 AI 기본값처럼 보이는 세 가지 룩(크림+세리프+테라코타 / 근검정+애시드그린 /
+신문형 헤어라인)을 피하려고 고른 것이다. 형광 연두 액센트를 초안에 넣었다가 잘라냈다 —
+세 번째 액센트가 절제를 깨뜨렸다. 규칙을 바꿀 거면 왜 절제가 더 이상 필요 없는지를 먼저 적을 것.
