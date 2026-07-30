@@ -14,7 +14,7 @@ export function TopBar({ mineOutstanding, boardOutstanding }: Props) {
   return (
     <header className="topbar">
       <div className="topbar-inner">
-        <h1 className="topbar-title">스터디 과제판</h1>
+        <h1 className="topbar-title">다했어요</h1>
         <p className="topbar-date">{formatToday()}</p>
         <p className="topbar-count">
           <span className="topbar-count-label">{label}</span>
