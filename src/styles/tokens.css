@@ -1,0 +1,51 @@
+/* 스터디 바인더 — 디자인 토큰
+   재생지 위에 청색 도장 잉크. 액센트는 stamp/alert 둘뿐이고,
+   alert는 "마감 지남 + 미제출" 한 조건에서만 등장한다. */
+
+:root {
+  /* Color */
+  --paper: #e8ebe4;
+  --paper-card: #f2f4ee;
+  --ink: #22282b;
+  --stamp: #2f4c8c;
+  --alert: #c2452d;
+  --muted: #8a9490;
+
+  /* 위 다섯 색에서만 파생시킨다 (새 색조를 추가하지 않는다) */
+  --rule: color-mix(in srgb, var(--ink) 14%, transparent);
+  --rule-strong: color-mix(in srgb, var(--ink) 28%, transparent);
+  --stamp-wash: color-mix(in srgb, var(--stamp) 10%, transparent);
+  --alert-wash: color-mix(in srgb, var(--alert) 9%, transparent);
+  --ink-wash: color-mix(in srgb, var(--ink) 6%, transparent);
+
+  /* Type */
+  --font-display: 'Gowun Batang', serif;
+  --font-body: 'IBM Plex Sans KR', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.9375rem;
+  --text-md: 1.0625rem;
+  --text-lg: 1.375rem;
+  --text-xl: 1.75rem;
+  --text-2xl: 2.25rem;
+
+  /* Space */
+  --s-1: 0.25rem;
+  --s-2: 0.5rem;
+  --s-3: 0.75rem;
+  --s-4: 1rem;
+  --s-5: 1.5rem;
+  --s-6: 2rem;
+  --s-7: 3rem;
+
+  /* Shape */
+  --radius: 3px;
+  --radius-card: 5px;
+  --page-max: 1100px;
+
+  /* Motion — 도장을 누르는 감각. 하나의 연출된 순간만. */
+  --ease-press: cubic-bezier(0.2, 0.8, 0.3, 1);
+  --dur-press: 180ms;
+}
